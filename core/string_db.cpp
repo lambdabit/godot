@@ -91,6 +91,8 @@ void StringName::cleanup() {
 	lock->unlock();
 
 	memdelete(lock);
+
+	configured = false;
 }
 
 void StringName::unref() {

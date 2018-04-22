@@ -166,6 +166,7 @@ void OS_Android::delete_main_loop() {
 
 void OS_Android::finalize() {
 	memdelete(input);
+	memdelete(visual_server);
 }
 
 void OS_Android::alert(const String &p_alert, const String &p_title) {

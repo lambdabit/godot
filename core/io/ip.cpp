@@ -301,6 +301,8 @@ IP::IP() {
 
 IP::~IP() {
 
+	singleton = NULL;
+
 #ifndef NO_THREADS
 	if (resolver->thread) {
 		resolver->thread_abort = true;
