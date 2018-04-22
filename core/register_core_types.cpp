@@ -266,3 +266,6 @@ void unregister_core_types() {
 
 	MemoryPool::cleanup();
 }
+void unregister_core_singletons() {
+	Engine::get_singleton()->clear_singletons();
+}
