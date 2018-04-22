@@ -251,7 +251,24 @@ void AudioDriverOpenSL::unlock() {
 
 void AudioDriverOpenSL::finish() {
 
-	(*sl)->Destroy(sl);
+	if (player != NULL) {
+		(*player)->Destroy(player);
+		player = NULL;
+		playItf = NULL;
+		bufferQueueItf = NULL;
+		volumeItf = NULL;
+	}
+
+	if (OutputMix != NULL) {
+		(*OutputMix)->Destroy(OutputMix);
+		OutputMix = NULL;
+	}
+
+	if (sl != NULL) {
+		(*sl)->Destroy(sl);
+		sl = NULL;
+		EngineItf = NULL;
+	}
 }
 
 void AudioDriverOpenSL::set_pause(bool p_pause) {
