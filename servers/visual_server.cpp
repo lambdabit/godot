@@ -2245,4 +2245,5 @@ VisualServer::VisualServer() {
 VisualServer::~VisualServer() {
 
 	singleton = NULL;
+	create_func = NULL;
 }
