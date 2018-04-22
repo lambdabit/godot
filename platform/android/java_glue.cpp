@@ -1614,5 +1614,35 @@ JNIEXPORT void JNICALL Java_org_godotengine_godot_GodotLib_calldeferred(JNIEnv *
 
 //Main::cleanup();
 
+JNIEXPORT void JNICALL Java_org_godotengine_godot_GodotLib_stop(JNIEnv *env, jobject obj) {
+	if (step == 0)
+		return;
+
+	print_line("android_stop\n");
+
+	os_android->main_loop_end();
+}
+
+JNIEXPORT void JNICALL Java_org_godotengine_godot_GodotLib_cleanup(JNIEnv *env, jobject obj) {
+	if (step == 0)
+		return;
+
+	print_line("cleanup\n");
+
+	memdelete(java_class_wrapper);
+	java_class_wrapper = NULL;
+
+	Main::cleanup();
+
+	os_android = NULL;
+
+	initialized = false;
+	step = 0;
+	resized = false;
+	resized_reload = false;
+
+	print_line("cleanup\n");
+}
+
 //return os.get_exit_code();
 #endif
