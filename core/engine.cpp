@@ -126,6 +126,11 @@ void Engine::get_singletons(List<Singleton> *p_singletons) {
 		p_singletons->push_back(E->get());
 }
 
+void Engine::clear_singletons() {
+	singletons.clear();
+	singleton_ptrs.clear();
+}
+
 Engine *Engine::singleton = NULL;
 
 Engine *Engine::get_singleton() {

@@ -101,6 +101,7 @@ public:
 	void add_singleton(const Singleton &p_singleton);
 	void get_singletons(List<Singleton> *p_singletons);
 	bool has_singleton(const String &p_name) const;
+	void clear_singletons();
 	Object *get_singleton_object(const String &p_name) const;
 
 	_FORCE_INLINE_ bool get_use_pixel_snap() const { return _pixel_snap; }

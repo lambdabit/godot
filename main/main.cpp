@@ -1969,6 +1969,7 @@ void Main::cleanup() {
 		memdelete(engine);
 
 	unregister_core_driver_types();
+	unregister_core_singletons();
 	unregister_core_types();
 
 	OS::get_singleton()->clear_last_error();
