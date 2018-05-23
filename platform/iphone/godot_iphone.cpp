@@ -43,9 +43,9 @@ int add_path(int p_argc, char **p_args);
 int add_cmdline(int p_argc, char **p_args);
 };
 
-int iphone_main(int, int, int, char **, String);
+int iphone_main(int, int, int, char **, String, String);   //lambdabit
 
-int iphone_main(int width, int height, int argc, char **argv, String data_dir) {
+int iphone_main(int width, int height, int argc, char **argv, String data_dir, String folderName) {   //lambdabit
 
 	int len = strlen(argv[0]);
 
@@ -76,7 +76,7 @@ int iphone_main(int width, int height, int argc, char **argv, String data_dir) {
 	argc = add_cmdline(argc, fargv);
 
 	printf("os created\n");
-	Error err = Main::setup(fargv[0], argc - 1, &fargv[1], false);
+	Error err = Main::setup(fargv[0], argc - 1, &fargv[1], false, folderName);
 	printf("setup %i\n", err);
 	if (err != OK)
 		return 255;
@@ -88,5 +88,5 @@ void iphone_finish() {
 
 	printf("iphone_finish\n");
 	Main::cleanup();
-	delete os;
+	/*delete os;*/   //lambdabit
 };

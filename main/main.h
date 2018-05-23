@@ -50,7 +50,7 @@ class Main {
 	static bool force_redraw_requested;
 
 public:
-	static Error setup(const char *execpath, int argc, char *argv[], bool p_second_phase = true);
+	static Error setup(const char *execpath, int argc, char *argv[], bool p_second_phase = true, String folderName = "");   //lambdabit
 	static Error setup2(Thread::ID p_main_tid_override = 0);
 	static bool start();
 	static bool iteration();

@@ -73,7 +73,7 @@
 #include "servers/physics_2d_server.h"
 
 #include "core/io/file_access_pack.h"
-#include "core/io/file_access_zip.h"
+/*#include "core/io/file_access_zip.h"*/   //lambdabit
 #include "core/io/stream_peer_ssl.h"
 #include "core/io/stream_peer_tcp.h"
 #include "main/input_default.h"
@@ -96,9 +96,9 @@ static MessageQueue *message_queue = NULL;
 static Performance *performance = NULL;
 
 static PackedData *packed_data = NULL;
-#ifdef MINIZIP_ENABLED
+/*#ifdef MINIZIP_ENABLED
 static ZipArchive *zip_packed_data = NULL;
-#endif
+#endif*/   //lambdabit
 static FileAccessNetworkClient *file_access_network_client = NULL;
 static TranslationServer *translation_server = NULL;
 
@@ -128,6 +128,7 @@ static int fixed_fps = -1;
 static bool auto_build_solutions = false;
 static bool auto_quit = false;
 static bool print_fps = false;
+static bool firstOpen = true;   //lambdabit
 
 static OS::ProcessID allow_focus_steal_pid = 0;
 
@@ -282,8 +283,10 @@ void Main::print_help(const char *p_binary) {
 #endif
 }
 
-Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_phase) {
-	RID_OwnerBase::init_rid();
+Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_phase, String folderName) {  //lambdabit
+	if(firstOpen) {  //lambdabit
+		RID_OwnerBase::init_rid();
+	}   //lambdabit
 
 	OS::get_singleton()->initialize_core();
 
@@ -337,7 +340,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 
 	String video_driver = "";
 	String audio_driver = "";
-	String game_path = ".";
+	String game_path = folderName;   //lambdabit
 	bool upwards = false;
 	String debug_mode;
 	String debug_host;
@@ -354,10 +357,10 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	bool found_project = false;
 
 	packed_data = PackedData::get_singleton();
-	if (!packed_data)
-		packed_data = memnew(PackedData);
+	/*if (!packed_data)*/  //lambdabit
+	packed_data = memnew(PackedData);
 
-#ifdef MINIZIP_ENABLED
+/*#ifdef MINIZIP_ENABLED
 
 	//XXX: always get_singleton() == 0x0
 	zip_packed_data = ZipArchive::get_singleton();
@@ -367,7 +370,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	}
 
 	packed_data->add_pack_source(zip_packed_data);
-#endif
+#endif*/   //lambdabit
 
 	I = args.front();
 	while (I) {
@@ -971,7 +974,9 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 
 	Engine::get_singleton()->set_frame_delay(frame_delay);
 
-	message_queue = memnew(MessageQueue);
+	if (firstOpen) {   //lambdabit
+		message_queue = memnew(MessageQueue);
+	}   //lambdabit
 
 	ProjectSettings::get_singleton()->register_global_defaults();
 
@@ -1251,7 +1256,7 @@ bool Main::start() {
 			project_manager = true;
 #endif
 		} else if (args[i].length() && args[i][0] != '-' && game_path == "") {
-			game_path = args[i];
+			/*game_path = args[i];*/   //lambdabit
 		}
 		//parameters that have an argument to the right
 		else if (i < (args.size() - 1)) {
@@ -1890,8 +1895,8 @@ void Main::cleanup() {
 
 	ERR_FAIL_COND(!_start_success);
 
-	message_queue->flush();
-	memdelete(message_queue);
+	/*message_queue->flush();
+	memdelete(message_queue);*/   //lambdabit
 
 	if (script_debugger) {
 		if (use_debug_profiler) {
@@ -1910,7 +1915,7 @@ void Main::cleanup() {
 	ResourceLoader::clear_translation_remaps();
 	ResourceLoader::clear_path_remaps();
 
-	ScriptServer::finish_languages();
+	/*ScriptServer::finish_languages();*/   //lambdabit
 
 #ifdef TOOLS_ENABLED
 	EditorNode::unregister_editor_types();
@@ -1922,15 +1927,15 @@ void Main::cleanup() {
 	}
 
 	unregister_driver_types();
-	unregister_module_types();
+	/*unregister_module_types();*/   //lambdabit
 	unregister_platform_apis();
-	unregister_scene_types();
+	/*unregister_scene_types();*/   //lambdabit
 	unregister_server_types();
 
-	if (audio_server) {
+	/*if (audio_server) {
 		audio_server->finish();
 		memdelete(audio_server);
-	}
+	}*/   //lambdabit
 
 	OS::get_singleton()->finalize();
 	finalize_physics();
@@ -1950,10 +1955,12 @@ void Main::cleanup() {
 	if (engine)
 		memdelete(engine);
 
-	unregister_core_driver_types();
+	/*unregister_core_driver_types();*/   //lambdabit
 	unregister_core_singletons();
 	unregister_core_types();
 
 	OS::get_singleton()->clear_last_error();
 	OS::get_singleton()->finalize_core();
+
+	firstOpen = false;   //lambdabit
 }
