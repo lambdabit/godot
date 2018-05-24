@@ -128,6 +128,7 @@ static int fixed_fps = -1;
 static bool auto_build_solutions = false;
 static bool auto_quit = false;
 static bool print_fps = false;
+static bool firstOpen = true;   //lambdabit
 
 static OS::ProcessID allow_focus_steal_pid = 0;
 
@@ -283,6 +284,7 @@ void Main::print_help(const char *p_binary) {
 }
 
 Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_phase) {
+	if (firstOpen)   //lambdabit
 	RID_OwnerBase::init_rid();
 
 	OS::get_singleton()->initialize_core();
@@ -354,7 +356,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	bool found_project = false;
 
 	packed_data = PackedData::get_singleton();
-	if (!packed_data)
+	/*if (!packed_data)*/   //lambdabit
 		packed_data = memnew(PackedData);
 
 #ifdef MINIZIP_ENABLED
@@ -971,6 +973,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 
 	Engine::get_singleton()->set_frame_delay(frame_delay);
 
+    if(firstOpen)   //lambdabit
 	message_queue = memnew(MessageQueue);
 
 	ProjectSettings::get_singleton()->register_global_defaults();
@@ -1048,6 +1051,7 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 	// right moment to create and initialize the audio server
 
 	audio_server = memnew(AudioServer);
+
 	audio_server->init();
 
 	// also init our arvr_server from here
@@ -1192,8 +1196,9 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 
 	register_driver_types();
 
+if(firstOpen){
 	ScriptServer::init_languages();
-
+}
 	MAIN_PRINT("Main: Load Translations");
 
 	translation_server->setup(); //register translations, load them, etc.
@@ -1714,7 +1719,7 @@ static uint64_t physics_process_max = 0;
 static uint64_t idle_process_max = 0;
 
 bool Main::iteration() {
-
+    
 	uint64_t ticks = OS::get_singleton()->get_ticks_usec();
 	Engine::get_singleton()->_frame_ticks = ticks;
 
@@ -1814,9 +1819,9 @@ bool Main::iteration() {
 	idle_process_max = MAX(idle_process_ticks, idle_process_max);
 	uint64_t frame_time = OS::get_singleton()->get_ticks_usec() - ticks;
 
-	for (int i = 0; i < ScriptServer::get_language_count(); i++) {
+	/*for (int i = 0; i < ScriptServer::get_language_count(); i++) {
 		ScriptServer::get_language(i)->frame();
-	}
+	}*/    //   lambdabit !!!maybe have bug here!!!
 
 	if (script_debugger) {
 		if (script_debugger->is_profiling()) {
@@ -1890,8 +1895,8 @@ void Main::cleanup() {
 
 	ERR_FAIL_COND(!_start_success);
 
-	message_queue->flush();
-	memdelete(message_queue);
+	/*message_queue->flush();
+	memdelete(message_queue);*/
 
 	if (script_debugger) {
 		if (use_debug_profiler) {
@@ -1910,7 +1915,7 @@ void Main::cleanup() {
 	ResourceLoader::clear_translation_remaps();
 	ResourceLoader::clear_path_remaps();
 
-	ScriptServer::finish_languages();
+	/*ScriptServer::finish_languages();*/
 
 #ifdef TOOLS_ENABLED
 	EditorNode::unregister_editor_types();
@@ -1922,9 +1927,9 @@ void Main::cleanup() {
 	}
 
 	unregister_driver_types();
-	unregister_module_types();
+	/*unregister_module_types();*/
 	unregister_platform_apis();
-	unregister_scene_types();
+	/*unregister_scene_types();*/
 	unregister_server_types();
 
 	if (audio_server) {
@@ -1950,10 +1955,12 @@ void Main::cleanup() {
 	if (engine)
 		memdelete(engine);
 
-	unregister_core_driver_types();
+	/*unregister_core_driver_types();*/   //lambdabit
 	unregister_core_singletons();
 	unregister_core_types();
 
 	OS::get_singleton()->clear_last_error();
 	OS::get_singleton()->finalize_core();
+
+	firstOpen = false;   //lambdabit
 }

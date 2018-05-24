@@ -1568,15 +1568,13 @@ JNIEXPORT void JNICALL Java_org_godotengine_godot_GodotLib_stop(JNIEnv *env, job
 }
 
 JNIEXPORT void JNICALL Java_org_godotengine_godot_GodotLib_cleanup(JNIEnv *env, jobject obj) {
-	if (step == 0)
-		return;
-
+	// if (step == 0)
+	// 	return;
+	
 	print_line("cleanup\n");
 
-	memdelete(java_class_wrapper);
-	java_class_wrapper = NULL;
-
-	Main::cleanup();
+	// memdelete(java_class_wrapper);
+	// java_class_wrapper = NULL;
 
 	os_android = NULL;
 
@@ -1584,7 +1582,8 @@ JNIEXPORT void JNICALL Java_org_godotengine_godot_GodotLib_cleanup(JNIEnv *env, 
 	step = 0;
 	resized = false;
 	resized_reload = false;
-
+    jni_singletons.clear();
+	Main::cleanup();
 	print_line("cleanup\n");
 }
 

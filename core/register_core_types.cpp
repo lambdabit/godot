@@ -239,7 +239,7 @@ void unregister_core_types() {
 
 	if (resource_saver_binary)
 		memdelete(resource_saver_binary);
-	if (resource_loader_binary)
+	/*if (resource_loader_binary)
 		memdelete(resource_loader_binary);
 	if (resource_format_importer)
 		memdelete(resource_format_importer);
@@ -247,17 +247,17 @@ void unregister_core_types() {
 	memdelete(resource_format_po);
 
 	if (ip)
-		memdelete(ip);
+		memdelete(ip);*/   //lambdabit
 
 	ObjectDB::cleanup();
 
 	unregister_variant_methods();
-	unregister_global_constants();
+	/*unregister_global_constants();
 
-	ClassDB::cleanup();
+	ClassDB::cleanup();*/   //lambdabit
 	ResourceCache::clear();
 	CoreStringNames::free();
-	StringName::cleanup();
+	/*StringName::cleanup();*/   //lambdabit
 
 	if (_global_mutex) {
 		memdelete(_global_mutex);
