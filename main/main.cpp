@@ -1053,6 +1053,7 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 	// right moment to create and initialize the audio server
 
 	audio_server = memnew(AudioServer);
+
 	audio_server->init();
 
 	// also init our arvr_server from here
@@ -1197,8 +1198,9 @@ Error Main::setup2(Thread::ID p_main_tid_override) {
 
 	register_driver_types();
 
+if(firstOpen){
 	ScriptServer::init_languages();
-
+}
 	MAIN_PRINT("Main: Load Translations");
 
 	translation_server->setup(); //register translations, load them, etc.
@@ -1719,7 +1721,7 @@ static uint64_t physics_process_max = 0;
 static uint64_t idle_process_max = 0;
 
 bool Main::iteration() {
-
+    
 	uint64_t ticks = OS::get_singleton()->get_ticks_usec();
 	Engine::get_singleton()->_frame_ticks = ticks;
 
@@ -1819,9 +1821,9 @@ bool Main::iteration() {
 	idle_process_max = MAX(idle_process_ticks, idle_process_max);
 	uint64_t frame_time = OS::get_singleton()->get_ticks_usec() - ticks;
 
-	for (int i = 0; i < ScriptServer::get_language_count(); i++) {
+	/*for (int i = 0; i < ScriptServer::get_language_count(); i++) {
 		ScriptServer::get_language(i)->frame();
-	}
+	}*/    //   lambdabit !!!maybe have bug here!!!
 
 	if (script_debugger) {
 		if (script_debugger->is_profiling()) {
