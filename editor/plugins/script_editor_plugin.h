@@ -199,6 +199,10 @@ class ScriptEditor : public PanelContainer {
 	ItemList *script_list;
 	HSplitContainer *script_split;
 	ItemList *members_overview;
+	VBoxContainer *overview_vbox;
+	HBoxContainer *buttons_hbox;
+	Label *filename;
+	ToolButton *members_overview_alphabeta_sort_button;
 	bool members_overview_enabled;
 	ItemList *help_overview;
 	bool help_overview_enabled;
@@ -318,6 +322,7 @@ class ScriptEditor : public PanelContainer {
 
 	void _update_members_overview_visibility();
 	void _update_members_overview();
+	void _toggle_members_overview_alpha_sort(bool p_alphabetic_sort);
 	void _update_script_names();
 	bool _sort_list_on_update;
 

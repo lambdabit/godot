@@ -55,6 +55,7 @@ class SceneTreeEditor : public Control {
 		BUTTON_WARNING = 5,
 		BUTTON_SIGNALS = 6,
 		BUTTON_GROUPS = 7,
+		BUTTON_PIN = 8,
 	};
 
 	Tree *tree;
@@ -69,8 +70,6 @@ class SceneTreeEditor : public Control {
 	int blocked;
 
 	void _compute_hash(Node *p_node, uint64_t &hash);
-
-	void toggle_visible(Node *p_node);
 
 	bool _add_nodes(Node *p_node, TreeItem *p_parent);
 	void _test_update_tree();
