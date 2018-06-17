@@ -363,7 +363,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	/*if (!packed_data)*/  //lambdabit
 	packed_data = memnew(PackedData);
 
-/*#ifdef MINIZIP_ENABLED
+#ifdef MINIZIP_ENABLED
 
 	//XXX: always get_singleton() == 0x0
 	zip_packed_data = ZipArchive::get_singleton();
