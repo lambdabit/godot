@@ -343,7 +343,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 
 	String video_driver = "";
 	String audio_driver = "";
-	String game_path = folderName;   //lambdabit
+	String project_path = folderName;   //lambdabit
 	bool upwards = false;
 	String debug_mode;
 	String debug_host;
