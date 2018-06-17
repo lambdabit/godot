@@ -73,7 +73,7 @@
 #include "servers/physics_2d_server.h"
 
 #include "core/io/file_access_pack.h"
-/*#include "core/io/file_access_zip.h"*/   //lambdabit
+#include "core/io/file_access_zip.h"
 #include "core/io/stream_peer_ssl.h"
 #include "core/io/stream_peer_tcp.h"
 #include "main/input_default.h"
@@ -98,9 +98,9 @@ static MessageQueue *message_queue = NULL;
 static Performance *performance = NULL;
 
 static PackedData *packed_data = NULL;
-/*#ifdef MINIZIP_ENABLED
+#ifdef MINIZIP_ENABLED
 static ZipArchive *zip_packed_data = NULL;
-#endif*/   //lambdabit
+#endif
 static FileAccessNetworkClient *file_access_network_client = NULL;
 static TranslationServer *translation_server = NULL;
 
@@ -373,7 +373,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	}
 
 	packed_data->add_pack_source(zip_packed_data);
-#endif*/   //lambdabit
+#endif
 
 	I = args.front();
 	while (I) {
