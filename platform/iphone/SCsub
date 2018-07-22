@@ -8,7 +8,7 @@ iphone_lib = [
     'os_iphone.cpp',
     'sem_iphone.cpp',
     'gl_view.mm',
-    'main.m',
+    # 'main.m',
     #'app_delegate.mm',  //lambdabit
     'view_controller.mm',
     'game_center.mm',
