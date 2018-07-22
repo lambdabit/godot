@@ -178,11 +178,14 @@ void VisualServerViewport::_draw_viewport(Viewport *p_viewport, ARVRInterface::E
 		VSG::rasterizer->restore_render_target();
 
 		if (scenario_draw_canvas_bg && canvas_map.front() && canvas_map.front()->key().layer > scenario_canvas_max_layer) {
+			Ref<ARVRInterface> arvr_interface = ARVRServer::get_singleton()->get_primary_interface();
 
-			if (can_draw_3d) {
-				VSG::scene->render_camera(p_viewport->camera, p_viewport->scenario, p_viewport->size, p_viewport->shadow_atlas);
-			} else {
+			if (!can_draw_3d) {
 				VSG::scene->render_empty_scene(p_viewport->scenario, p_viewport->shadow_atlas);
+			} else if (p_viewport->use_arvr && arvr_interface.is_valid()) {
+				VSG::scene->render_camera(arvr_interface, p_eye, p_viewport->camera, p_viewport->scenario, p_viewport->size, p_viewport->shadow_atlas);
+			} else {
+				VSG::scene->render_camera(p_viewport->camera, p_viewport->scenario, p_viewport->size, p_viewport->shadow_atlas);
 			}
 			scenario_draw_canvas_bg = false;
 		}
@@ -210,11 +213,14 @@ void VisualServerViewport::_draw_viewport(Viewport *p_viewport, ARVRInterface::E
 			i++;
 
 			if (scenario_draw_canvas_bg && E->key().layer >= scenario_canvas_max_layer) {
+				Ref<ARVRInterface> arvr_interface = ARVRServer::get_singleton()->get_primary_interface();
 
-				if (can_draw_3d) {
-					VSG::scene->render_camera(p_viewport->camera, p_viewport->scenario, p_viewport->size, p_viewport->shadow_atlas);
-				} else {
+				if (!can_draw_3d) {
 					VSG::scene->render_empty_scene(p_viewport->scenario, p_viewport->shadow_atlas);
+				} else if (p_viewport->use_arvr && arvr_interface.is_valid()) {
+					VSG::scene->render_camera(arvr_interface, p_eye, p_viewport->camera, p_viewport->scenario, p_viewport->size, p_viewport->shadow_atlas);
+				} else {
+					VSG::scene->render_camera(p_viewport->camera, p_viewport->scenario, p_viewport->size, p_viewport->shadow_atlas);
 				}
 
 				scenario_draw_canvas_bg = false;
@@ -222,11 +228,14 @@ void VisualServerViewport::_draw_viewport(Viewport *p_viewport, ARVRInterface::E
 		}
 
 		if (scenario_draw_canvas_bg) {
+			Ref<ARVRInterface> arvr_interface = ARVRServer::get_singleton()->get_primary_interface();
 
-			if (can_draw_3d) {
-				VSG::scene->render_camera(p_viewport->camera, p_viewport->scenario, p_viewport->size, p_viewport->shadow_atlas);
-			} else {
+			if (!can_draw_3d) {
 				VSG::scene->render_empty_scene(p_viewport->scenario, p_viewport->shadow_atlas);
+			} else if (p_viewport->use_arvr && arvr_interface.is_valid()) {
+				VSG::scene->render_camera(arvr_interface, p_eye, p_viewport->camera, p_viewport->scenario, p_viewport->size, p_viewport->shadow_atlas);
+			} else {
+				VSG::scene->render_camera(p_viewport->camera, p_viewport->scenario, p_viewport->size, p_viewport->shadow_atlas);
 			}
 
 			scenario_draw_canvas_bg = false;
@@ -259,7 +268,7 @@ void VisualServerViewport::draw_viewports() {
 		ERR_CONTINUE(!vp->render_target.is_valid());
 
 		bool visible = vp->viewport_to_screen_rect != Rect2() || vp->update_mode == VS::VIEWPORT_UPDATE_ALWAYS || vp->update_mode == VS::VIEWPORT_UPDATE_ONCE || (vp->update_mode == VS::VIEWPORT_UPDATE_WHEN_VISIBLE && VSG::storage->render_target_was_used(vp->render_target));
-		visible = visible && vp->size.x > 0 && vp->size.y > 0;
+		visible = visible && vp->size.x > 1 && vp->size.y > 1;
 
 		if (!visible)
 			continue;
@@ -451,6 +460,15 @@ void VisualServerViewport::viewport_set_disable_3d(RID p_viewport, bool p_disabl
 	viewport->disable_3d = p_disable;
 	//VSG::storage->render_target_set_flag(viewport->render_target, RasterizerStorage::RENDER_TARGET_NO_3D, p_disable);
 	//this should be just for disabling rendering of 3D, to actually disable it, set usage
+}
+
+void VisualServerViewport::viewport_set_keep_3d_linear(RID p_viewport, bool p_keep_3d_linear) {
+
+	Viewport *viewport = viewport_owner.getornull(p_viewport);
+	ERR_FAIL_COND(!viewport);
+
+	viewport->keep_3d_linear = p_keep_3d_linear;
+	VSG::storage->render_target_set_flag(viewport->render_target, RasterizerStorage::RENDER_TARGET_KEEP_3D_LINEAR, p_keep_3d_linear);
 }
 
 void VisualServerViewport::viewport_attach_camera(RID p_viewport, RID p_camera) {

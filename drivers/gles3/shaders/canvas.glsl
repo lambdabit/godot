@@ -4,6 +4,11 @@
 layout(location=0) in highp vec2 vertex;
 layout(location=3) in vec4 color_attrib;
 
+#ifdef USE_SKELETON
+layout(location=6) in uvec4 bone_indices; // attrib:6
+layout(location=7) in vec4 bone_weights; // attrib:7
+#endif
+
 #ifdef USE_TEXTURE_RECT
 
 uniform vec4 dst_rect;
@@ -51,6 +56,12 @@ out highp vec2 pixel_size_interp;
 #endif
 
 
+#ifdef USE_SKELETON
+uniform mediump sampler2D skeleton_texture; // texunit:-1
+uniform highp mat4 skeleton_transform;
+uniform highp mat4 skeleton_transform_inverse;
+#endif
+
 #ifdef USE_LIGHTING
 
 layout(std140) uniform LightData { //ubo:1
@@ -71,10 +82,10 @@ layout(std140) uniform LightData { //ubo:1
 
 
 out vec4 light_uv_interp;
+out vec2 transformed_light_uv;
 
 
 out vec4 local_rot;
-
 
 #ifdef USE_SHADOWS
 out highp vec2 pos;
@@ -100,6 +111,7 @@ MATERIAL_UNIFORMS
 };
 
 #endif
+
 
 VERTEX_SHADER_GLOBALS
 
@@ -146,6 +158,7 @@ void main() {
 
 #endif
 
+
 #define extra_matrix extra_matrix2
 
 {
@@ -175,12 +188,62 @@ VERTEX_SHADER_CODE
 #endif
 
 
+#ifdef USE_SKELETON
+
+	if (bone_weights!=vec4(0.0)){ //must be a valid bone
+		//skeleton transform
+
+		ivec4 bone_indicesi = ivec4(bone_indices);
+
+		ivec2 tex_ofs = ivec2( bone_indicesi.x%256, (bone_indicesi.x/256)*2 );
+
+		highp mat2x4 m = mat2x4(
+			texelFetch(skeleton_texture,tex_ofs,0),
+			texelFetch(skeleton_texture,tex_ofs+ivec2(0,1),0)
+		) * bone_weights.x;
+
+		tex_ofs = ivec2( bone_indicesi.y%256, (bone_indicesi.y/256)*2 );
+
+		m+= mat2x4(
+					texelFetch(skeleton_texture,tex_ofs,0),
+					texelFetch(skeleton_texture,tex_ofs+ivec2(0,1),0)
+				) * bone_weights.y;
+
+		tex_ofs = ivec2( bone_indicesi.z%256, (bone_indicesi.z/256)*2 );
+
+		m+= mat2x4(
+					texelFetch(skeleton_texture,tex_ofs,0),
+					texelFetch(skeleton_texture,tex_ofs+ivec2(0,1),0)
+				) * bone_weights.z;
+
+
+		tex_ofs = ivec2( bone_indicesi.w%256, (bone_indicesi.w/256)*2 );
+
+		m+= mat2x4(
+					texelFetch(skeleton_texture,tex_ofs,0),
+					texelFetch(skeleton_texture,tex_ofs+ivec2(0,1),0)
+				) * bone_weights.w;
+
+		mat4 bone_matrix = skeleton_transform * transpose(mat4(m[0],m[1],vec4(0.0,0.0,1.0,0.0),vec4(0.0,0.0,0.0,1.0))) * skeleton_transform_inverse;
+
+		outvec = bone_matrix * outvec;
+	}
+
+#endif
+
 	gl_Position = projection_matrix * outvec;
 
 #ifdef USE_LIGHTING
 
 	light_uv_interp.xy = (light_matrix * outvec).xy;
 	light_uv_interp.zw =(light_local_matrix * outvec).xy;
+
+	mat3 inverse_light_matrix = mat3(inverse(light_matrix));
+	inverse_light_matrix[0] = normalize(inverse_light_matrix[0]);
+	inverse_light_matrix[1] = normalize(inverse_light_matrix[1]);
+	inverse_light_matrix[2] = normalize(inverse_light_matrix[2]);
+	transformed_light_uv = (inverse_light_matrix * vec3(light_uv_interp.zw,0.0)).xy; //for normal mapping
+
 #ifdef USE_SHADOWS
 	pos=outvec.xy;
 #endif
@@ -206,6 +269,7 @@ VERTEX_SHADER_CODE
 uniform mediump sampler2D color_texture; // texunit:0
 uniform highp vec2 color_texpixel_size;
 uniform mediump sampler2D normal_texture; // texunit:1
+
 
 in highp vec2 uv_interp;
 in mediump vec4 color_interp;
@@ -248,6 +312,7 @@ layout(std140) uniform LightData {
 
 uniform lowp sampler2D light_texture; // texunit:-1
 in vec4 light_uv_interp;
+in vec2 transformed_light_uv;
 
 
 in vec4 local_rot;
@@ -462,10 +527,9 @@ FRAGMENT_SHADER_CODE
 
 
 
-
 #ifdef USE_LIGHTING
 
-	vec2 light_vec = light_uv_interp.zw;; //for shadow and normal mapping
+	vec2 light_vec = transformed_light_uv;
 
 	if (normal_used) {
 		normal.xy =  mat2(local_rot.xy,local_rot.zw) * normal.xy;
@@ -511,7 +575,7 @@ FRAGMENT_SHADER_CODE
 		color*=light;
 
 #ifdef USE_SHADOWS
-
+		light_vec = light_uv_interp.zw; //for shadows
 		float angle_to_light = -atan(light_vec.x,light_vec.y);
 		float PI = 3.14159265358979323846264;
 		/*int i = int(mod(floor((angle_to_light+7.0*PI/6.0)/(4.0*PI/6.0))+1.0, 3.0)); // +1 pq os indices estao em ordem 2,0,1 nos arrays

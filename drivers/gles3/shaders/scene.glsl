@@ -90,6 +90,7 @@ layout(std140) uniform SceneData { //ubo:0
 	mediump float reflection_multiplier;
 	mediump float subsurface_scatter_width;
 	mediump float ambient_occlusion_affect_light;
+	mediump float ambient_occlusion_affect_ao_channel;
 
 	bool fog_depth_enabled;
 	highp float fog_depth_begin;
@@ -322,7 +323,13 @@ void main() {
 #if !defined(SKIP_TRANSFORM_USED) && defined(VERTEX_WORLD_COORDS_USED)
 
 	vertex = world_matrix * vertex;
+
+#if defined(ENSURE_CORRECT_NORMALS)
+	mat3 normal_matrix = mat3(transpose(inverse(world_matrix)));
+	normal = normal_matrix * normal;
+#else
 	normal = normalize((world_matrix * vec4(normal,0.0)).xyz);
+#endif
 
 #if defined(ENABLE_TANGENT_INTERP) || defined(ENABLE_NORMALMAP) || defined(LIGHT_USE_ANISOTROPY)
 
@@ -394,7 +401,13 @@ VERTEX_SHADER_CODE
 #if !defined(SKIP_TRANSFORM_USED) && !defined(VERTEX_WORLD_COORDS_USED)
 
 	vertex = modelview * vertex;
+
+#if defined(ENSURE_CORRECT_NORMALS)
+	mat3 normal_matrix = mat3(transpose(inverse(modelview)));
+	normal = normal_matrix * normal;
+#else
 	normal = normalize((modelview * vec4(normal,0.0)).xyz);
+#endif
 
 #if defined(ENABLE_TANGENT_INTERP) || defined(ENABLE_NORMALMAP) || defined(LIGHT_USE_ANISOTROPY)
 
@@ -558,11 +571,6 @@ in vec3 normal_interp;
 
 /* PBR CHANNELS */
 
-//used on forward mainly
-uniform bool no_ambient_light;
-
-
-
 #ifdef USE_RADIANCE_MAP
 
 
@@ -670,6 +678,7 @@ layout(std140) uniform SceneData {
 	mediump float reflection_multiplier;
 	mediump float subsurface_scatter_width;
 	mediump float ambient_occlusion_affect_light;
+	mediump float ambient_occlusion_affect_ao_channel;
 
 	bool fog_depth_enabled;
 	highp float fog_depth_begin;
@@ -1206,6 +1215,7 @@ void light_process_omni(int idx, vec3 vertex, vec3 eye_vec,vec3 normal,vec3 bino
 	float omni_attenuation = pow( max(1.0 - normalized_distance, 0.0), omni_lights[idx].light_direction_attenuation.w );
 	vec3 light_attenuation = vec3(omni_attenuation);
 
+#if !defined(SHADOWS_DISABLED)
 	if (omni_lights[idx].light_params.w>0.5) {
 		//there is a shadowmap
 
@@ -1252,6 +1262,7 @@ void light_process_omni(int idx, vec3 vertex, vec3 eye_vec,vec3 normal,vec3 bino
 #endif
 		light_attenuation*=mix(omni_lights[idx].shadow_color_contact.rgb,vec3(1.0),shadow);
 	}
+#endif //SHADOWS_DISABLED
 
 	light_compute(normal,normalize(light_rel_vec),eye_vec,binormal,tangent,omni_lights[idx].light_color_energy.rgb,light_attenuation,albedo,transmission,omni_lights[idx].light_params.z*p_blob_intensity,roughness,metallic,rim * omni_attenuation,rim_tint,clearcoat,clearcoat_gloss,anisotropy,diffuse_light,specular_light);
 
@@ -1270,6 +1281,7 @@ void light_process_spot(int idx, vec3 vertex, vec3 eye_vec, vec3 normal, vec3 bi
 	spot_attenuation*= 1.0 - pow( spot_rim, spot_lights[idx].light_params.x);
 	vec3 light_attenuation = vec3(spot_attenuation);
 
+#if !defined(SHADOWS_DISABLED)
 	if (spot_lights[idx].light_params.w>0.5) {
 		//there is a shadowmap
 		highp vec4 splane=(spot_lights[idx].shadow_matrix * vec4(vertex,1.0));
@@ -1287,6 +1299,7 @@ void light_process_spot(int idx, vec3 vertex, vec3 eye_vec, vec3 normal, vec3 bi
 #endif
 		light_attenuation*=mix(spot_lights[idx].shadow_color_contact.rgb,vec3(1.0),shadow);
 	}
+#endif //SHADOWS_DISABLED
 
 	light_compute(normal,normalize(light_rel_vec),eye_vec,binormal,tangent,spot_lights[idx].light_color_energy.rgb,light_attenuation,albedo,transmission,spot_lights[idx].light_params.z*p_blob_intensity,roughness,metallic,rim * spot_attenuation,rim_tint,clearcoat,clearcoat_gloss,anisotropy,diffuse_light,specular_light);
 
@@ -1734,42 +1747,43 @@ FRAGMENT_SHADER_CODE
 
 #ifdef USE_RADIANCE_MAP
 
-	if (no_ambient_light) {
-		ambient_light=vec3(0.0,0.0,0.0);
-	} else {
-		{
+#ifdef AMBIENT_LIGHT_DISABLED
+	ambient_light=vec3(0.0,0.0,0.0);
+#else
+	{
 
-			{ //read radiance from dual paraboloid
+		{ //read radiance from dual paraboloid
 
-				vec3 ref_vec = reflect(-eye_vec,normal); //2.0 * ndotv * normal - view; // reflect(v, n);
-				ref_vec=normalize((radiance_inverse_xform * vec4(ref_vec,0.0)).xyz);
-				vec3 radiance = textureDualParaboloid(radiance_map,ref_vec,roughness) * bg_energy;
-				env_reflection_light = radiance;
-
-			}
-			//no longer a cubemap
-			//vec3 radiance = textureLod(radiance_cube, r, lod).xyz * ( brdf.x + brdf.y);
+			vec3 ref_vec = reflect(-eye_vec,normal); //2.0 * ndotv * normal - view; // reflect(v, n);
+			ref_vec=normalize((radiance_inverse_xform * vec4(ref_vec,0.0)).xyz);
+			vec3 radiance = textureDualParaboloid(radiance_map,ref_vec,roughness) * bg_energy;
+			env_reflection_light = radiance;
 
 		}
-#ifndef USE_LIGHTMAP
-		{
+		//no longer a cubemap
+		//vec3 radiance = textureLod(radiance_cube, r, lod).xyz * ( brdf.x + brdf.y);
 
-			vec3 ambient_dir=normalize((radiance_inverse_xform * vec4(normal,0.0)).xyz);
-			vec3 env_ambient=textureDualParaboloid(radiance_map,ambient_dir,1.0) * bg_energy;
-
-			ambient_light=mix(ambient_light_color.rgb,env_ambient,radiance_ambient_contribution);
-			//ambient_light=vec3(0.0,0.0,0.0);
-		}
-#endif
 	}
+#ifndef USE_LIGHTMAP
+	{
+
+		vec3 ambient_dir=normalize((radiance_inverse_xform * vec4(normal,0.0)).xyz);
+		vec3 env_ambient=textureDualParaboloid(radiance_map,ambient_dir,1.0) * bg_energy;
+
+		ambient_light=mix(ambient_light_color.rgb,env_ambient,radiance_ambient_contribution);
+		//ambient_light=vec3(0.0,0.0,0.0);
+	}
+#endif
+#endif //AMBIENT_LIGHT_DISABLED
 
 #else
 
-	if (no_ambient_light){
-		ambient_light=vec3(0.0,0.0,0.0);
-	} else {
-		ambient_light=ambient_light_color.rgb;
-	}
+#ifdef AMBIENT_LIGHT_DISABLED
+	ambient_light=vec3(0.0,0.0,0.0);
+#else
+	ambient_light=ambient_light_color.rgb;
+#endif //AMBIENT_LIGHT_DISABLED
+
 #endif
 
 	ambient_light*=ambient_energy;
@@ -1785,6 +1799,7 @@ FRAGMENT_SHADER_CODE
 
 	float depth_z = -vertex.z;
 #ifdef LIGHT_DIRECTIONAL_SHADOW
+#if !defined(SHADOWS_DISABLED)
 
 #ifdef LIGHT_USE_PSSM4
 	if (depth_z < shadow_split_offsets.w) {
@@ -1927,6 +1942,7 @@ FRAGMENT_SHADER_CODE
 	}
 
 
+#endif // !defined(SHADOWS_DISABLED)
 #endif //LIGHT_DIRECTIONAL_SHADOW
 
 #ifdef USE_VERTEX_LIGHTING
@@ -2122,18 +2138,16 @@ FRAGMENT_SHADER_CODE
 
 #else
 
-#if defined(ENABLE_AO)
-
-	float ambient_scale=0.0; // AO is supplied by material
-#else
 	//approximate ambient scale for SSAO, since we will lack full ambient
 	float max_emission=max(emission.r,max(emission.g,emission.b));
 	float max_ambient=max(ambient_light.r,max(ambient_light.g,ambient_light.b));
 	float max_diffuse=max(diffuse_light.r,max(diffuse_light.g,diffuse_light.b));
 	float total_ambient = max_ambient+max_diffuse+max_emission;
 	float ambient_scale = (total_ambient>0.0) ? (max_ambient+ambient_occlusion_affect_light*max_diffuse)/total_ambient : 0.0;
-#endif //ENABLE_AO
 
+#if defined(ENABLE_AO)
+	ambient_scale=mix(0.0,ambient_scale,ambient_occlusion_affect_ao_channel);
+#endif
 	diffuse_buffer=vec4(emission+diffuse_light+ambient_light,ambient_scale);
 	specular_buffer=vec4(specular_light,metallic);
 

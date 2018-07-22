@@ -228,6 +228,7 @@ public:
 		SHAPE_SPHERE, ///< float:"radius"
 		SHAPE_BOX, ///< vec3:"extents"
 		SHAPE_CAPSULE, ///< dict( float:"radius", float:"height"):capsule
+		SHAPE_CYLINDER, ///< dict( float:"radius", float:"height"):cylinder
 		SHAPE_CONVEX_POLYGON, ///< array of planes:"planes"
 		SHAPE_CONCAVE_POLYGON, ///< vector3 array:"triangles" , or Dictionary with "indices" (int array) and "triangles" (Vector3 array)
 		SHAPE_HEIGHTMAP, ///< dict( int:"width", int:"depth",float:"cell_size", float_array:"heights"
@@ -594,6 +595,8 @@ public:
 		G6DOF_JOINT_LINEAR_LIMIT_SOFTNESS,
 		G6DOF_JOINT_LINEAR_RESTITUTION,
 		G6DOF_JOINT_LINEAR_DAMPING,
+		G6DOF_JOINT_LINEAR_MOTOR_TARGET_VELOCITY,
+		G6DOF_JOINT_LINEAR_MOTOR_FORCE_LIMIT,
 		G6DOF_JOINT_ANGULAR_LOWER_LIMIT,
 		G6DOF_JOINT_ANGULAR_UPPER_LIMIT,
 		G6DOF_JOINT_ANGULAR_LIMIT_SOFTNESS,
@@ -611,6 +614,7 @@ public:
 		G6DOF_JOINT_FLAG_ENABLE_LINEAR_LIMIT,
 		G6DOF_JOINT_FLAG_ENABLE_ANGULAR_LIMIT,
 		G6DOF_JOINT_FLAG_ENABLE_MOTOR,
+		G6DOF_JOINT_FLAG_ENABLE_LINEAR_MOTOR,
 		G6DOF_JOINT_FLAG_MAX
 	};
 

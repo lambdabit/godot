@@ -509,6 +509,12 @@ String InputEventMouseButton::as_text() const {
 		case BUTTON_WHEEL_RIGHT:
 			button_index_string = "BUTTON_WHEEL_RIGHT";
 			break;
+		case BUTTON_XBUTTON1:
+			button_index_string = "BUTTON_XBUTTON1";
+			break;
+		case BUTTON_XBUTTON2:
+			button_index_string = "BUTTON_XBUTTON2";
+			break;
 		default:
 			button_index_string = itos(get_button_index());
 			break;
@@ -601,6 +607,12 @@ String InputEventMouseMotion::as_text() const {
 		case BUTTON_MASK_RIGHT:
 			button_mask_string = "BUTTON_MASK_RIGHT";
 			break;
+		case BUTTON_MASK_XBUTTON1:
+			button_mask_string = "BUTTON_MASK_XBUTTON1";
+			break;
+		case BUTTON_MASK_XBUTTON2:
+			button_mask_string = "BUTTON_MASK_XBUTTON2";
+			break;
 		default:
 			button_mask_string = itos(get_button_mask());
 			break;
@@ -656,12 +668,14 @@ bool InputEventJoypadMotion::action_match(const Ref<InputEvent> &p_event, bool *
 	if (jm.is_null())
 		return false;
 
-	bool match = (axis == jm->axis && (((axis_value < 0) == (jm->axis_value < 0)) || jm->axis_value == 0));
+	bool match = (axis == jm->axis); // Matches even if not in the same direction, but returns a "not pressed" event.
 	if (match) {
+		bool same_direction = (((axis_value < 0) == (jm->axis_value < 0)) || jm->axis_value == 0);
+		bool pressed = same_direction ? Math::abs(jm->get_axis_value()) >= p_deadzone : false;
 		if (p_pressed != NULL)
-			*p_pressed = Math::abs(jm->get_axis_value()) >= p_deadzone;
+			*p_pressed = pressed;
 		if (p_strength != NULL)
-			*p_strength = (*p_pressed) ? Math::inverse_lerp(p_deadzone, 1.0f, Math::abs(jm->get_axis_value())) : 0.0f;
+			*p_strength = pressed ? CLAMP(Math::inverse_lerp(p_deadzone, 1.0f, Math::abs(jm->get_axis_value())), 0.0f, 1.0f) : 0.0f;
 	}
 	return match;
 }

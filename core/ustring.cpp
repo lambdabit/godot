@@ -753,6 +753,42 @@ Vector<String> String::split(const String &p_splitter, bool p_allow_empty, int p
 	return ret;
 }
 
+Vector<String> String::rsplit(const String &p_splitter, bool p_allow_empty, int p_maxsplit) const {
+
+	Vector<String> ret;
+	const int len = length();
+	int remaining_len = len;
+
+	while (true) {
+
+		if (remaining_len < p_splitter.length() || (p_maxsplit > 0 && p_maxsplit == ret.size())) {
+			// no room for another splitter or hit max splits, push what's left and we're done
+			if (p_allow_empty || remaining_len > 0) {
+				ret.push_back(substr(0, remaining_len));
+			}
+			break;
+		}
+
+		int left_edge = rfind(p_splitter, remaining_len - p_splitter.length());
+
+		if (left_edge < 0) {
+			// no more splitters, we're done
+			ret.push_back(substr(0, remaining_len));
+			break;
+		}
+
+		int substr_start = left_edge + p_splitter.length();
+		if (p_allow_empty || substr_start < remaining_len) {
+			ret.push_back(substr(substr_start, remaining_len - substr_start));
+		}
+
+		remaining_len = left_edge;
+	}
+
+	ret.invert();
+	return ret;
+}
+
 Vector<float> String::split_floats(const String &p_splitter, bool p_allow_empty) const {
 
 	Vector<float> ret;
@@ -945,8 +981,8 @@ String String::num(double p_num, int p_decimals) {
 
 #ifndef NO_USE_STDLIB
 
-	if (p_decimals > 12)
-		p_decimals = 12;
+	if (p_decimals > 16)
+		p_decimals = 16;
 
 	char fmt[7];
 	fmt[0] = '%';
@@ -3755,8 +3791,8 @@ String String::get_file() const {
 String String::get_extension() const {
 
 	int pos = find_last(".");
-	if (pos < 0)
-		return *this;
+	if (pos < 0 || pos < MAX(find_last("/"), find_last("\\")))
+		return "";
 
 	return substr(pos + 1, length());
 }
@@ -3834,7 +3870,7 @@ String String::percent_decode() const {
 String String::get_basename() const {
 
 	int pos = find_last(".");
-	if (pos < 0)
+	if (pos < 0 || pos < MAX(find_last("/"), find_last("\\")))
 		return *this;
 
 	return substr(0, pos);

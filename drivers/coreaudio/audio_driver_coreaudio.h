@@ -68,9 +68,6 @@ class AudioDriverCoreAudio : public AudioDriver {
 			UInt32 inBusNumber, UInt32 inNumberFrames,
 			AudioBufferList *ioData);
 
-	Error init_device();
-	Error finish_device();
-
 public:
 	const char *get_name() const {
 		return "CoreAudio";
@@ -90,6 +87,7 @@ public:
 	virtual void finish();
 
 	bool try_lock();
+	void stop();
 
 	AudioDriverCoreAudio();
 	~AudioDriverCoreAudio();
